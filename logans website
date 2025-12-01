@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Logan's Website</title>
+  <style>
+    body {
+      /* EDIT THE BACKGROUND COLOR HERE */
+      background: #e0f7fa;
+      font-family: Comic-sans, sans-serif;
+      padding: 2rem;
+      transition: background 0.3s;
+    }
+    .title {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+    .subtitle {
+      font-size: 1.25rem;
+      margin-bottom: 2rem;
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+  <!-- EDIT THE TITLES BELOW -->
+  <div>
+    <div class="title">Logans Really Cool Website</div>
+    <div class="subtitle">that has some games i made</div>
+  </div>
+  <!-- ADD MORE CONTENT BELOW IF NEEDED -->
+</body>
+ill put somthing here eventually, but if you are seeing this text, either i havent put anything here yet or my code is messed up
+</html>
+import React from "react";
+import { useNavigate } from "react-router-dom";
+
+export default function Home() {
+  const navigate = useNavigate();
+
+  return (
+    <div style={{ display: "flex", gap: "8px", marginTop: "30px" }}>
+      <button onClick={() => navigate("/pong")}>Pong</button>
+      <button onClick={() => navigate("/snake")}>Snake</button>
+      <button onClick={() => navigate("/breakout")}>Breakout</button>
+      <button onClick={() => navigate("/undecided")}>Undecided</button>
+    </div>
+  );
+}
