@@ -30,21 +30,7 @@
     <div class="subtitle">that has some games i made</div>
   </div>
   <!-- ADD MORE CONTENT BELOW IF NEEDED -->
+ <a href="/pong v2.html"> pong:</a>
 </body>
-ill put somthing here eventually, but if you are seeing this text, either i havent put anything here yet or my code is messed up
+
 </html>
-import React from "react";
-import { useNavigate } from "react-router-dom";
-
-export default function Home() {
-  const navigate = useNavigate();
-
-  return (
-    <div style={{ display: "flex", gap: "8px", marginTop: "30px" }}>
-      <button onClick={() => navigate("/pong")}>Pong</button>
-      <button onClick={() => navigate("/snake")}>Snake</button>
-      <button onClick={() => navigate("/breakout")}>Breakout</button>
-      <button onClick={() => navigate("/undecided")}>Undecided</button>
-    </div>
-  );
-}
