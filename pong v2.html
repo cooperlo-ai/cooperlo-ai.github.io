@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Pong</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #222;
+            color: #eee;
+            font-family: 'Press Start 2P', cursive;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        h1 {
+            font-size: 2rem;
+            text-transform: uppercase;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+        canvas {
+            background-color: #000;
+            border: 4px solid #fff;
+            border-radius: 8px;
+            /* Responsive canvas */
+            width: 90vw;
+            max-width: 800px;
+            aspect-ratio: 4 / 3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Progressive Pong</h1>
+    <!-- Canvas resolution is set in JS, CSS handles display size -->
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+       let playerScore = 0;
+       let aiScore = 0;
+    // Timer start (milliseconds)
+    let startTime = Date.now();
+
+    // --- Progressive difficulty / speed increase state ---
+    // AI paddle movement base speed (pixels per frame)
+    let aiSpeed = 2;
+    // Helper to get a random float in a range
+    function randRange(min, max) { return Math.random() * (max - min) + min; }
+    // When to next increase speed (ms since epoch)
+    let nextSpeedIncreaseAt = Date.now() + randRange(10000, 20000); // 10-20s
+    // Amount range to increase speeds by each time
+    const speedIncreaseMin = 0.2;
+    const speedIncreaseMax = 0.5;
+    // LEVEL UP indicator state
+    let levelUpActive = false;
+    let levelUpStartTime = 0;
+    const levelUpDuration = 1500; // ms
+    // Game over / high score
+    let gameOver = false;
+    let finalTimeMs = 0;
+    const BEST_TIME_KEY = 'pong_best_time_ms';
+    // load best time (ms) from localStorage if present
+    let bestTimeMs = parseInt(localStorage.getItem(BEST_TIME_KEY) || '0', 10) || 0;
+    // Title screen state
+    let titleMode = false;
+
+       
+       
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    // Set the internal resolution of the canvas
+    canvas.width = 800;
+    canvas.height = 600;
+
+function drawScore() {
+    ctx.fillStyle = 'white';
+    ctx.font = '35px "Press Start 2P"'; // Make sure to link this font in your HTML!
+    ctx.fillText(playerScore, canvas.width / 4, 50);
+    ctx.fillText(aiScore, 3 * canvas.width / 4, 50);
+
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([10, 10]);
+    ctx.beginPath();
+    ctx.moveTo(canvas.width / 2, 0);
+    ctx.lineTo(canvas.width / 2, canvas.height);
+    ctx.stroke();
+    ctx.setLineDash([]); // Reset line dash
+    }
+
+        // Set the internal resolution of the canvas
+        
+        // --- Game Constants ---
+        const paddleWidth = 15;
+        const paddleHeight = 100;
+        const ballSize = 15;
+
+        // --- Game State Variables ---
+         // Object to store pressed keys
+
+      
+   
+        
+    function createPlayerPaddle(){
+        return{
+            x: 10,
+            y: canvas.height / 2 - paddleHeight / 2,
+            width: paddleWidth,
+            height: paddleHeight,
+            dy: 0 // Direction of y-movement
+            };
+        }
+    function createAiPaddle(){
+        return {
+            x: canvas.width - paddleWidth - 10,
+            y: canvas.height / 2 - paddleHeight / 2,
+            width: paddleWidth,
+            height: paddleHeight,
+            dy: 0
+        };
+    }
+
+    function createBall(){
+        return{
+            x: canvas.width / 2 - ballSize / 2,
+            y: canvas.height / 2 - ballSize / 2,
+            width: ballSize,
+            height: ballSize,
+            dx: 5, // Direction of x-movement
+            dy: 5  // Direction of y-movement
+        };
+    }
+   function resetBall() {
+    ball.x = canvas.width / 2 - ballSize / 2;
+    ball.y = canvas.height / 2 - ballSize / 2;
+
+    ball.dx = -ball.dx; // Change direction so the other player serves
+    ball.dy = (Math.random() > 0.5 ? 1 : -1) * 5;
+   }
+
+        // Wall collision (Top/Bottom)
+
+            // Paddle collision
+        
+                // Optional: Increase speed slightly
+                // ball.dx *= 1.05; 
+                // ball.dy *= 1.05;
+        
+            // Score check
+        
+
+        // --- Collision Utility ---
+        
+
+        // --- Game State ---
+        
+
+        
+            // Start the game loop
+        
+    function draw(){
+        // 1. Clear the canvas
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        drawScore()
+        // 2. Draw Score & Middle Line
+    
+        // 3. Draw Player Paddle
+        ctx.fillStyle = 'white';
+        ctx.fillRect(playerPaddle.x, playerPaddle.y, playerPaddle.width, playerPaddle.height);
+
+        // 3. Draw the AI paddle
+        ctx.fillRect(aiPaddle.x, aiPaddle.y, aiPaddle.width, aiPaddle.height);
+
+        // 4. Draw the ball
+        ctx.fillRect(ball.x, ball.y, ball.width, ball.height);
+    // Draw the timer in top-right
+    drawTimer();
+    // Draw level-up indicator if active
+    drawLevelUp();
+
+    // If title screen, draw a simple title and instructions
+    if (titleMode) {
+        // dim background
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'white';
+        ctx.font = '28px "Press Start 2P"';
+        const title = 'PONG';
+        const tw = ctx.measureText(title).width;
+        ctx.fillText(title, canvas.width / 2 - tw / 2, canvas.height / 2 - 20);
+        ctx.font = '14px "Press Start 2P"';
+        const instr = 'Press ENTER to start';
+        const itw = ctx.measureText(instr).width;
+        ctx.fillText(instr, canvas.width / 2 - itw / 2, canvas.height / 2 + 20);
+        return;
+    }
+        if (gameOver) {
+        // dim background
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = 'white';
+        ctx.font = '28px "Press Start 2P"';
+        const title = 'GAME OVER';
+        const tw = ctx.measureText(title).width;
+        ctx.fillText(title, canvas.width / 2 - tw / 2, canvas.height / 2 - 20);
+
+        // final time
+        ctx.font = '20px "Press Start 2P"';
+        const finalText = 'TIME: ' + formatTime(finalTimeMs);
+        const ftw = ctx.measureText(finalText).width;
+        ctx.fillText(finalText, canvas.width / 2 - ftw / 2, canvas.height / 2 + 20);
+
+        // best time
+        ctx.font = '20px "Press Start 2P"';
+        const bestText = 'BEST: ' + formatTime(bestTimeMs);
+        const btw = ctx.measureText(bestText).width;
+        // Positioned at Y: 60
+        ctx.fillText(bestText, canvas.width / 2 - btw / 2, canvas.height / 2 + 60);
+
+        // NEW: Draw the Refresh button within the canvas, positioned below 'BEST'
+        ctx.font = '20px "Press Start 2P"';
+        const buttonText = 'REFRESH PAGE TO TRY AGAIN';
+        const btnW = ctx.measureText(buttonText).width;
+        const buttonX = canvas.width / 2 - btnW / 2;
+        // Position it 40px below the best time text (Y: 60 + 40 = 100)
+        const buttonY = canvas.height / 2 + 100;
+
+        ctx.fillStyle = '#fff';
+        ctx.fillText(buttonText, buttonX, buttonY);
+        
+        // NOTE: You must also implement the canvas event listener in your main script
+        // to handle clicks within the bounds of this text for the button to work.
+        // The bounds for a click listener would be roughly:
+        // retryButtonBounds = { x: buttonX, y: buttonY - 20, width: btnW, height: 30 };
+
+
+    return; // stop drawing game objects underneath
+    }
+
+      }
+ // --- Update Functions ---
+
+function formatTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+}
+
+function drawTimer() {
+    const elapsed = Date.now() - startTime;
+    const text = formatTime(elapsed);
+    ctx.fillStyle = 'white';
+    ctx.font = '20px "Press Start 2P"';
+    // place near top-right with some padding
+    const padding = 16;
+    const textWidth = ctx.measureText(text).width;
+    ctx.fillText(text, canvas.width - textWidth - padding, 30);
+}
+
+function drawLevelUp() {
+    if (!levelUpActive) return;
+    const elapsed = Date.now() - levelUpStartTime;
+    if (elapsed >= levelUpDuration) {
+        levelUpActive = false;
+        return;
+    }
+
+    // Flash between white and yellow roughly every 200ms
+    const flashInterval = 67;
+    const phase = Math.floor(elapsed / flashInterval) % 2;
+    ctx.fillStyle = phase === 0 ? 'white' : '#FFD700'; // gold/yellow
+    ctx.font = '22px "Press Start 2P"';
+    const text = 'LEVEL UP!';
+    const tw = ctx.measureText(text).width;
+    // draw slightly below the top edge, centered
+    ctx.fillText(text, canvas.width / 2 - tw / 2, 80);
+}
+
+function endGame() {
+    gameOver = true;
+    finalTimeMs = Date.now() - startTime;
+    // update best time if this run is longer
+    if (finalTimeMs > bestTimeMs) {
+        bestTimeMs = finalTimeMs;
+        try {
+            localStorage.setItem(BEST_TIME_KEY, String(bestTimeMs));
+        } catch (e) {
+            // localStorage might be unavailable in some contexts
+            console.warn('Could not save best time', e);
+        }
+    }
+}
+
+    function update() {
+    if (gameOver) return; // stop updating when game over
+        moveBall();
+        movePlayerPaddle();
+        moveAiPaddle();
+        // Periodically increase AI & ball speed
+        if (Date.now() >= nextSpeedIncreaseAt) {
+            const inc = randRange(speedIncreaseMin, speedIncreaseMax);
+            aiSpeed += inc;
+            // increase ball's horizontal speed keeping sign
+            ball.dx += (ball.dx > 0 ? 1 : -1) * inc;
+            // slightly nudge vertical speed too
+            ball.dy += (ball.dy > 0 ? 1 : -1) * inc;
+            // Activate level-up indicator
+            levelUpActive = true;
+            levelUpStartTime = Date.now();
+            // schedule next increase
+            nextSpeedIncreaseAt = Date.now() + randRange(10000, 20000);
+        }
+        // Check for score
+        if (ball.x < 0) {
+            // AI scored
+            aiScore++;
+            if (aiScore >= 10) {
+                endGame();
+            } else {
+                resetBall();
+            }
+        } else if (ball.x + ball.width > canvas.width) {
+            // Player scored
+            playerScore++;
+            resetBall();
+        }
+    }
+
+        // --- Event Listeners ---
+      
+        // --- Game Setup ---
+    function moveBall() {
+        ball.x += ball.dx;
+        ball.y += ball.dy;
+        if (ball.y + ball.dy < 0 || ball.y + ball.dy > canvas.height - ball.height) {
+            ball.dy = -ball.dy; // Reverse the y-direction
+        }
+                    // Check for paddle collisions
+        if (isColliding(ball, playerPaddle) || isColliding(ball, aiPaddle)) {
+            ball.dx = -ball.dx; // Reverse the x-direction
+     }   
+    }
+  
+
+    function isColliding(rect1, rect2) {
+        return (
+            rect1.x < rect2.x + rect2.width &&
+            rect1.x + rect1.width > rect2.x &&
+            rect1.y < rect2.y + rect2.height &&
+            rect1.y + rect1.height > rect2.y
+        );
+    }
+    // Optional: Add a "ping" sound effect here!
+     //var ping = new Audio('ping.mp3');
+    // ping.play();
+
+    function moveAiPaddle() {
+        // Find the center of the AI paddle
+        const aiPaddleCenter = aiPaddle.y + aiPaddle.height / 2;
+
+        // Make the paddle move towards the ball's y-position
+        // Use aiSpeed so difficulty can scale
+        if (aiPaddleCenter < ball.y - 10) {
+            aiPaddle.y += aiSpeed;
+        } else if (aiPaddleCenter > ball.y + 10) {
+            aiPaddle.y -= aiSpeed;
+        }
+
+        // Prevent paddle from going off-screen
+        if (aiPaddle.y < 0) {
+            aiPaddle.y = 0;
+        }
+        if (aiPaddle.y + aiPaddle.height > canvas.height) {
+            aiPaddle.y = canvas.height - aiPaddle.height;
+        }
+    }
+
+    // --- Game Objects (Factories) ---
+    let playerPaddle = createPlayerPaddle();
+    let aiPaddle = createAiPaddle();
+    let ball = createBall();
+    // --- Main Game Loop ---
+    function gameLoop() {
+         // 1. Update game state (we'll add this later)
+        update();
+
+        // 2. Draw the game
+        draw();
+
+            // 3. Ask the browser to run this function again
+        requestAnimationFrame(gameLoop);
+}
+
+
+
+       
+    const keys = {};
+    document.addEventListener('keydown', (event) => {
+    keys[event.key] = true; // Mark the key as pressed
+    });
+
+    document.addEventListener('keyup', (event) => {
+        keys[event.key] = false; // Mark the key as released
+    });
+
+    function movePlayerPaddle() {
+        // Move player paddle based on current key state
+        if (keys['ArrowUp']) {
+            playerPaddle.y -= 5;
+        }
+        if (keys['ArrowDown']) {
+            playerPaddle.y += 5;
+        }
+
+        // Clamp to canvas bounds
+        if (playerPaddle.y < 0) playerPaddle.y = 0;
+        if (playerPaddle.y > canvas.height - playerPaddle.height) {
+            playerPaddle.y = canvas.height - playerPaddle.height;
+        }
+    }
+
+// --- Start Game ---
+requestAnimationFrame(gameLoop);
+</script>
+
+</body>
+
+</html>
